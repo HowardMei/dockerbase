@@ -1,0 +1,20 @@
+#!/bin/sh
+
+echo "... ... Starting Service crond ... ..."
+
+# Close STDOUT file descriptor
+exec 1<&-
+# Close STDERR FD
+exec 2<&-
+
+# Open STDOUT as a file for read and write.
+exec 1<>/var/log/runsvdir/crond.log
+
+# Redirect STDERR to STDOUT
+exec 2>&1
+
+echo "Startup log of the command line: exec crond -f"
+echo "............................................................................................."
+
+[ -r /etc/envvars ] && . /etc/envvars
+exec crond -f

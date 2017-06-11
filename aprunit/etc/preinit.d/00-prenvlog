@@ -1,0 +1,38 @@
+#!/usr/bin/env /bin/sh
+
+set -e
+fn=$(basename $0)
+
+unset V VV
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+for _file in $(ls -1 /etc/preinit.d); do
+    [ ! -x /etc/preinit.d/${_file} ] && chmod a+x /etc/preinit.d/${_file}
+done
+
+for _file in $(ls -1 /etc/postclr.d); do
+    [ ! -x /etc/postclr.d/${_file} ] && chmod a+x /etc/postclr.d/${_file}
+done
+
+sync
+
+echo "$fn:Creating /etc/service directory ... ..."
+# Remove the old directory if it exists
+rm -rf /etc/service 2>/dev/null
+mkdir -p /etc/service
+mkdir -p /var/log/runsvdir
+
+#echo "\$_:$_   \$0:$0   \$-:$-   \$@:$@"
+echo "$fn:Preparing /etc/services.d services log folders and loggers ... ..."
+for _dir in $(ls -1 /etc/services.d); do
+    [ ! -d /etc/services.d/${_dir}/log ] && mkdir /etc/services.d/${_dir}/log 2>/dev/null
+    [ ! -e /etc/services.d/${_dir}/log/run ] && ln -sf /etc/runit/logger /etc/services.d/${_dir}/log/run 2>/dev/null
+done
+
+
+
+# Create a special log for all sh script related debug
+touch /var/log/shbin.log
+ln -sf /var/log/shbin.log /tmp/shbin.log
+
+unset _file _dir fn

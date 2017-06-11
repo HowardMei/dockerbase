@@ -1,0 +1,26 @@
+#!/bin/sh
+
+
+#---  FUNCTION  -------------------------------------------------------------------------------------------------------
+#          NAME:  unquote
+#%   DESCRIPTION:  Strip " and ' from the beginning and end of the given string
+#%   USAGE: unquote $string or echo $string | unquote
+#%   REQUIRES: sed
+#----------------------------------------------------------------------------------------------------------------------
+_unquote() {
+    if [ $# -lt 1 ]; then
+        echo "$(cat)" | sed -e "s/^\"//" -e "s/\"$//" -e "s/^'//" -e "s/'$//"
+    else
+        echo "$@" | sed -e "s/^\"//" -e "s/\"$//" -e "s/^'//" -e "s/'$//"
+    fi
+}
+
+
+if [ $# -lt 1 ]; then
+    echo "$(cat)" | _unquote
+else
+    echo "$*" | _unquote
+fi
+
+unset -f _unquote
+exit 0

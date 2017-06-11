@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+hubid=hwdm
+tag=$(grep -o "S6SCRIPTS_VERSION=.*" $(pwd)/Dockerfile | tr -d S6SCRIPTS_VERSION=v | tr -d . | tr -d '[:space:]')
+sudo docker build --force-rm --tag "${hubid}/aps6base:${tag}" .
+sudo docker tag "${hubid}/aps6base:${tag}" "${hubid}/aps6base:latest"

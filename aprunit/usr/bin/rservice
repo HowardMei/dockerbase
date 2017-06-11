@@ -1,0 +1,64 @@
+#!/bin/sh
+set -e
+runitactions="start stop status reload restart up down once pause cont hup alarm interrupt 1 2 term kill exit shutdown force-stop force-reload force-restart force-shutdown"
+
+if [ $# -lt 1 ]; then
+    echo "Simple Service Manager for Runit, Type rservice help to see details."
+    echo "Usage: rservice list | show servicename"
+    echo "OR     rservice servicename start | stop | status | reload | restart "
+else
+    case "$1" in
+        -l | --ls | ls | list | --list)
+        shift
+        histpath="$(pwd)"
+        cd /etc/service >/dev/null 2>&1
+        \ls -h --color ${@} 2>/dev/null
+        cd "$histpath" >/dev/null 2>&1
+        ;;
+        -s | --cat | cat | show)
+        shift
+        servname="$1"
+        if [ -z "${servname}" ]; then
+            echo 'Please provide a /etc/service service name. Run "rservice list" to show all services.' >&2
+        else
+            shift
+        fi
+        if [ -n "${servname}" ] && [ -r "/etc/service/${servname}/run" ]; then
+            cat "/etc/service/${servname}/run" | less 2>/dev/null
+        elif [ -n "${servname}" ]; then
+            echo "${servname} is NOT a valid service name. No content will be shown." >&2
+        fi
+        ;;
+        -h | --help | help)
+        echo "Simple Service Manager for Runit"
+        echo "Usage: rservice list | show servicename"
+        echo "OR     rservice servicename start | stop | status | reload | restart "
+        echo "OR any other service action in the following actions list:"
+        echo ${runitactions}
+        ;;
+        -- | *)
+        servname="$1"
+        if [ ! -d "/etc/service/${servname}" ]; then
+            histpath=$(pwd)
+            cd /etc/service 2>/dev/null
+            servname="$(\ls -1d ??-${servname} 2>/dev/null)"
+            cd ${histpath}
+        fi
+        action="$2"
+        [ ${action} == 'reload' ] && action="force-${action}"
+        if echo "${runitactions}" | grep -iq "${action}"; then
+            if [ -r "/etc/service/${servname}/run" ]; then
+                sv ${action} ${servname}
+            else
+                echo "${servname} is Not a valid service name. Please type rservice list to check."
+            fi
+        else
+            echo "${action} is Not a supported action. Please type rservice for usage details."
+            exit 1
+        fi
+        ;;
+    esac
+fi
+
+unset histpath servname hlp action
+exit 0

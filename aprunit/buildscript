@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+hubid=hwdm
+tag=$(grep -o "V=.*" $(pwd)/Dockerfile | tr -d V= | tr -d . | tr -d - | tr -d '[:space:]')
+sudo docker build --force-rm --tag "${hubid}/aprunit:${tag}" .
+sudo docker tag "${hubid}/aprunit:${tag}" "${hubid}/aprunit:latest"

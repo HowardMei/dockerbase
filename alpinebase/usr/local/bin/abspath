@@ -1,0 +1,88 @@
+#!/bin/sh
+
+
+set -o nounset     # Strict var declare
+set -o errexit     # Exit on error
+#---  FUNCTION  -------------------------------------------------------------------------------------------------------
+#          NAME:  abspath/the same as 'abspath' in dfsop.sh except use
+#          single '[' for sh instead of '[[' for bash in if conditions.
+#%   DESCRIPTION:  Get the absolute path of the given path
+#%   USAGE: abspath [ -f | -fl | --follow ] .
+#%   REQUIRES: tr, command, [readlink], ls, tail, pwd, cd, dirname, basename
+#----------------------------------------------------------------------------------------------------------------------
+unset CDPATH
+unset -f abspath
+abspath() {
+    if [ $# -lt 1 ];then
+        return 1
+    fi
+    local follow=""
+    local opt1="$1"
+    shift
+    local opt2="$@"
+    case "$opt1" in
+        -f | -fl | --follow | --followsymlink)
+            local follow="yes"
+            local opt="$(echo "$opt2" | tr -d '[:blank:]')"
+            if [ -z "$opt" ];then
+                return 1
+            else
+                local relpath="$opt"
+            fi
+        ;;
+        *)
+            local opt="$(echo "$opt1" | tr -d '[:blank:]')"
+            if [ -z "$opt" ];then
+                return 1
+            else
+                local relpath="$opt"
+            fi
+        ;;
+    esac
+
+    if [ -z "$relpath" ]; then
+        return 1
+    fi
+
+    if [ "yes" = "$follow" ] && [ -n "$(command -v readlink 2>/tmp/shbin.log)" ];then
+        local ABS_PATH="$(readlink -mf "$1" 2>/tmp/shbin.log)"
+        if [ $? -ne 0 ]; then
+            local ABS_PATH="$(readlink "$1" 2>/tmp/shbin.log)"
+        fi
+        if [ -n "$ABS_PATH" ] && [ $? -eq 0 ]; then
+            if [ -d "$ABS_PATH" ] || [ -f "$ABS_PATH" ];then
+                echo "$ABS_PATH"
+                return 0
+            fi
+        fi
+    fi
+
+    if [ "yes" = "$follow" ] && [ -f "$relpath" ]; then
+        local relpath="$(\ls -l $relpath | tr ' ' '\n' | tail -n 1)"
+    fi
+
+    local OLDPWD="$(pwd)"
+    if [ -d "$relpath" ]; then
+       local ABS_PATH="$(cd "$relpath" 2>/tmp/shbin.log && pwd || \ls -d "$relpath" 2>/tmp/shbin.log)"
+    elif [ -f "$relpath" ];then
+          local PARENT_DIR="$(dirname "$relpath" 2>/tmp/shbin.log)"
+          cd "$PARENT_DIR" >/tmp/shbin.log 2>&1
+          local ABS_PATH="$(pwd)/$(basename "$relpath" 2>/tmp/shbin.log)"
+    fi
+    cd "$OLDPWD" >/tmp/shbin.log 2>&1
+    if [ -d "${ABS_PATH:-}" ] || [ -f "${ABS_PATH:-}" ] || [ -L "${ABS_PATH:-}" ];then
+        echo "$ABS_PATH"
+    else
+        return 1
+    fi
+}
+
+
+if [ $# -lt 1 ]; then
+    export -f abspath 2>/tmp/shbin.log
+else
+    abspath "$@"
+    unset -f abspath
+fi
+
+exit 0

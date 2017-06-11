@@ -1,0 +1,10 @@
+#!/bin/sh
+
+set -e
+fn=$(basename $0)
+
+echo "$fn:Enabling crond service, by symlinking /etc/services.d/crond to /etc/service"
+	ln -s /etc/services.d/99-crond /etc/service/
+	#ln -sf /etc/services.d/rsyslogd /etc/service
+
+unset fn

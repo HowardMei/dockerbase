@@ -1,0 +1,94 @@
+#!/bin/sh
+## This is the runit manager scripts overlay. It requires runit package being installed.
+set -e
+_cmdargn=$#
+_cmdargs=${@}
+export DOCKER_CMDLINE="${@}"
+
+# Save original environment variables before executing init scripts
+export > /etc/origenvvars
+
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+if [ -z ${SCRIPT_FAILMODE} ]; then
+    # 0: Ignore the failures, 1: Exit on any failure
+    SCRIPT_FAILMODE=1
+fi
+
+
+_shutdown() {
+  # Running post-daemon clearing tasks
+  /etc/runit/p3
+  echo >&2 "Killing all runit supervisor processes ... ..."
+  sv exit /etc/service/*
+  echo >&2 "Kill runit PID1 and Shut Down Container $(hostname)"
+  # shutdown runsvdir command
+  kill -HUP $RUNSVDIR 2>/dev/null
+  wait $RUNSVDIR
+  # give processes time to stop
+  sleep 0.2
+  # kill any other processes still running in the container
+  for _pid  in $(ps -eo pid | grep -v PID  | tr -d ' ' | grep -v '^1$' | head -n -6); do
+      [ -n $_pid ] && timeout -t 2 /bin/sh -c "kill $_pid 2>/dev/null && wait $_pid || kill -9 $_pid 2>/dev/null" 2>/dev/null
+  done
+  echo >&2 "Container is successfully shut down!"
+  exit 0
+}
+
+\rm -f /etc/runit/stopall
+
+# Run pre-daemon tasks
+/etc/runit/p1
+
+[ -r /etc/envvars ] && . /etc/envvars
+if [ -e /etc/runit/runit ] && [ ! -e /etc/runit/stopall ]; then
+echo "Start the following services under runit supervisor ... ..."
+echo "------------------------------------------------------------------"
+echo "$(lr /etc/service)"
+echo "------------------------------------------------------------------"
+# Start all daemons
+    /etc/runit/p2&
+fi
+RUNSVID=$!
+echo "Started runit supervisors script, whose PID is ${RUNSVID}."
+# Sleep Interval is NSTEP=0.2 seconds per step/dot
+NSTEP=0.2
+NSV=$(ls -1 /etc/service | wc -l)
+if isdigit ${RUNSVWAITSEC} 2>/dev/null && [ ${RUNSVWAITSEC} -ge 1 ]; then
+    echo "Waiting ${RUNSVWAITSEC} seconds for services processes to stablize ... ..."
+    NTOT=$(ecalc ${RUNSVWAITSEC}/${NSTEP})
+else
+# Give each service 2 seconds to start up
+    echo "Waiting $(ecalc ${NSV}*2) seconds for services processes to stablize ... ..."
+    NTOT=$(ecalc ${NSV}*2/${NSTEP})
+fi
+N=0
+while [ ${N} -le ${NTOT} ]; do
+    sleep ${NSTEP};
+    N=$(ecalc ${N}+1);
+    printf ". ";
+done
+echo ""
+echo "List all supervised services status ... ..."
+echo "=================================================================="
+for _srv in $(ls -1 /etc/service); do
+    sv status ${_srv}
+done
+echo "=================================================================="
+[ -r /etc/envvars ] && . /etc/envvars
+if [ ${_cmdargn} -gt 0 ] && [ ! -e /etc/runit/stopall ]; then
+    sleep 0.5
+    echo >&2 ">>>Executing command line $: ${_cmdargs}"
+    sleep 0.2
+    exec ${_cmdargs}
+fi
+
+# Catch shutdown signals
+echo "@All processes are running properly, waiting for termination signal (Ctrl+C) ... ..."
+trap _shutdown SIGTERM SIGINT SIGHUP
+wait ${RUNSVID}
+
+_shutdown
+
+unset ev N NSTEP NTOT _cmdargn _cmdargs _pid RUNSVID RUNSVDIR
+unset -f _shutdown

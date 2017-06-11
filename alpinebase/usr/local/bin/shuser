@@ -1,0 +1,20 @@
+#!/bin/sh
+    
+
+#%   DESCRIPTION:  Return the current shell user name
+#%   USAGE:     shuser
+#%   REQUIRES:  id, whoami
+
+#----------------------------------------------------------------------------------------------------------------------
+#SHUSER="root"
+# whoami alternative for SunOS
+if [ -f /usr/xpg4/bin/id ]; then
+    whoami='/usr/xpg4/bin/id -un'
+else
+    whoami='whoami'
+fi
+
+SHUSER="$(id -un 2>/tmp/shbin.log || whoami 2>/tmp/shbin.log)"
+export SHUSER
+echo "$SHUSER"
+

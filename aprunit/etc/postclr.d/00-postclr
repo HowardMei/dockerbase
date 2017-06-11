@@ -1,0 +1,10 @@
+#!/bin/sh
+
+fn=$(basename $0)
+echo "$fn:Clearing the Container environment ... ..."
+chmod a+w /etc/runit/stopit
+\rm -f /etc/runit/{runit,stopit,stopall}
+\rm -rf /var/log/*
+\rm -f /etc/envvars /etc/origenvvars
+
+unset fn

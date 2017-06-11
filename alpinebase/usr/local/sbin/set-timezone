@@ -1,0 +1,43 @@
+#!/bin/sh
+
+if [ $# -ne 1 ]; then
+    exit 1
+else
+    _newtz=${1}
+fi
+
+echo "$(cat /etc/timezone 2>/dev/null || echo 'UTC'): $(date)"
+
+if [ -f "/etc/timezone" ]; then
+    if cat /etc/timezone | grep -iq "${_newtz}"; then
+        echo "Time zone is ${_newtz} already, skipping the setting tasks."
+        unset _newtz
+        exit 0
+    fi
+fi
+
+if [ ! -e "/usr/share/zoneinfo/${_newtz}" ]; then
+    rm -rf /usr/share/zoneinfo && rm -f /etc/localtime
+    echo "Installing tzdata package and extracting time zone info ..."
+    apk-install --quiet tzdata
+fi
+
+if [ -r "/usr/share/zoneinfo/${_newtz}" ]; then
+    echo "Setting new time zone to ${_newtz} ..."
+    cp /usr/share/zoneinfo/${_newtz} /etc/localtime
+    echo "${_newtz}" > /etc/timezone
+    export TIMEZONE=${_newtz}
+    echo "$(cat /etc/timezone 2>/dev/null): $(date)"
+else
+    echo "Cannot find time zone info of ${_newtz}, please use the correct format like Asia/Singapore"
+fi
+
+if [ -d "/usr/share/zoneinfo" ]; then
+    echo "Uninstalling tzdata package and removing time zone info ..."
+    apk-remove tzdata && rm -rf /usr/share/zoneinfo
+    # Sometimes we don't know why it doesn't work, so we work around
+    mkdir -p $(dirname "/usr/share/zoneinfo/${_newtz}")
+    ln -s /etc/localtime /usr/share/zoneinfo/${_newtz}
+fi
+
+unset _newtz

@@ -1,0 +1,10 @@
+#!/bin/sh
+
+PATH=/bin:/usr/bin
+MSG="System is going down in 8 seconds..."
+
+touch /etc/runit/stopit
+chmod 100 /etc/runit/stopit && echo "$MSG" | wall
+/bin/sleep 8
+
+unset MSG

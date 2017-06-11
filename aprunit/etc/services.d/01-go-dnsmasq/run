@@ -1,0 +1,27 @@
+#!/bin/sh
+
+
+echo "... ... Starting Service go-dnsmasq ... ..."
+
+# Close STDOUT file descriptor
+exec 1<&-
+# Close STDERR FD
+exec 2<&-
+
+# Open STDOUT as a file for read and write.
+exec 1<>/var/log/runsvdir/go-dnsmasq.log
+
+# Redirect STDERR to STDOUT
+exec 2>&1
+
+echo "Startup log of the command line: sux go-dnsmasq go-dnsmasq --default-resolver --ndots "1" --fwd-ndots "0" --hostsfile=/etc/hosts"
+echo "............................................................................................."
+
+chown root:go-dnsmasq /etc/resolv.conf
+chmod 0664 /etc/resolv.conf
+
+[ -r /etc/envvars ] && . /etc/envvars
+
+sux go-dnsmasq go-dnsmasq --default-resolver --ndots "1" --fwd-ndots "0" --hostsfile=/etc/hosts
+
+echo '... ... Service go-dnsmasq Started Successfully ... ...'

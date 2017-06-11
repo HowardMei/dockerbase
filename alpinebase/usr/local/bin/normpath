@@ -1,0 +1,32 @@
+#!/bin/sh
+    
+
+#---  FUNCTION  -------------------------------------------------------------------------------------------------------
+#          NAME:  win2posix or posix2win
+#%   DESCRIPTION:  Change the slashes in the given path according to OS
+#%   USAGE: normpath [win|lin|-l|-w] "/file\path/in\//chaos.ext"
+#%   REQUIRES: sed
+#----------------------------------------------------------------------------------------------------------------------
+unset -f normpath
+_win2posix() {
+    echo "$@" | sed -e 's_\\/_/_g' | sed -e 's_[\]_/_g' | sed -e 's_//_/_g' | sed -e 's_\:/_\://_g'
+}
+
+normpath() {
+	if [ $# -lt 1 ]; then
+		echo 'Usage: normpath [windows|linux|-l|-w] "/file\path/in\//chaos.ext"'
+	else
+		case "$1" in
+			-w | --win | win | windows)
+				shift
+				_win2posix "$@" | sed -e 's_/_\\_g';;
+			-l | --lin | lin | posix | linux)
+				shift
+				_win2posix "$@";;
+			"" | -- | *)
+				_win2posix "$@";;
+		esac
+	fi
+}
+
+normpath $@

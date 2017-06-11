@@ -1,0 +1,46 @@
+#!/bin/sh 
+set -e
+if [ $0 != "./run" ];then
+  echo "This script meant to be linked as ./run in a service/log directory only!"
+  exit 1
+fi
+curdir=$(basename $(pwd))
+if [ "$curdir" != "log" ];then
+  echo "This script meant to be run from a service/log directory only!"
+  exit 1
+fi
+if [ -f ./conf ];then
+  . ./conf
+fi
+if [ ! -v SV_TIMESTAMP ];then
+  echo "Setting default timestamp"
+  # Default to tai64 timestamps
+  SV_TIMESTAMP="-t"
+fi
+if [ "x${SV_LOGDIR}" != "x" ];then
+  logdir=${SV_LOGDIR}
+fi
+if [ -w /var/log ];then
+  user_group=${USERGROUP:-daemon:adm}
+  if [ "x${logdir}" == "x" ];then
+    logdir=$(basename $(dirname $(pwd)))
+  fi
+  [ -d "/var/log/${logdir}" ] || mkdir -p "/var/log/${logdir}"
+  [ -L ./main ] || [ -d ./main ] || ln -s "/var/log/${logdir}" ./main
+  [ -L ./current ] || ln -s main/current
+  if [ "x${CURRENT_LOG_FILE}" != "x" ];then
+    [ -L "/var/log/${logdir}/${CURRENT_LOG_FILE}" ] || ln -s current "/var/log/${logdir}/${CURRENT_LOG_FILE}"
+  fi
+  usergroup=$(stat -c "%U:%G" "/var/log/${logdir}")
+  if [ "${usergroup}" != "${user_group}" ];then
+    chown -R ${user_group} "/var/log/${logdir}"
+  fi
+  echo "Logging as ${user_group} to /var/log/${logdir}"
+  exec chpst -u ${user_group} svlogd ${SV_TIMESTAMP} ./main
+else
+  echo "Logging in ${PWD}"
+  if [ "x${CURRENT_LOG_FILE}" != "x" ];then
+    [ -L "${CURRENT_LOG_FILE}" ] || ln -s current "${CURRENT_LOG_FILE}"
+  fi
+  exec svlogd ${SV_TIMESTAMP} ./
+fi

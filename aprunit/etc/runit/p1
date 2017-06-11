@@ -1,0 +1,29 @@
+#!/bin/sh
+set -e
+
+#PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin;
+
+echo "Starting one-time pre-service init scripts in /etc/preinit.d"
+
+for _script in /etc/preinit.d/*; do
+    if [ -x "${_script}" ] && [ ! -e /etc/runit/stopall ]; then
+        echo >&2 "*** Running: ${_script}"
+        ${_script}
+        retval=$?
+        if [ ${retval} != 0 ]; then
+            echo >&2 "*** Failed with return value: $?"
+            if [ ${SCRIPT_FAILMODE} -eq 1 ]; then
+                touch /etc/runit/stopall
+                exit ${retval}
+            fi
+        fi
+    else
+        echo >&2 "*** Failed to run: ${_script}. Please chmod +x ${_script}"
+    fi
+done
+
+touch /etc/runit/runit
+touch /etc/runit/stopit
+chmod 0 /etc/runit/stopit
+
+unset _script
