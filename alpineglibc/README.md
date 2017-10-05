@@ -3,6 +3,8 @@
 This layer 2 docker image is built upon [hwdm/apbase image](https://hub.docker.com/r/hwdm/apbase/) `latest` tag
 
 ## Description
+Add glibc to alpine to support software that aren't based on muslc, such as Java.
+
 
 ## Additions
 Packages: `glibc glibc-bin`

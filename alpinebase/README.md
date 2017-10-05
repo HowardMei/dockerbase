@@ -2,7 +2,7 @@
 
 This layer 1 docker image is built upon [alpine image](https://hub.docker.com/r/_/alpine/) `3.6` tag with edge enhancement,
 which itself is built from [Alpine Linux](https://alpinelinux.org/) [`v3.6`](http://dl-cdn.alpinelinux.org/alpine/v3.6/)
-branch for best support of DNS search paths and new packages, such as php7@edge/testing repository.
+branch for best support of DNS search paths and new packages, such as apks@edge/testing repository.
 If the intent is to be a minimal base for single-service containers, using `@testing` is not expected to cause issues.
 For multi-process containers, it may generate some unexpected results. Please do more testing before production.
 
@@ -21,13 +21,38 @@ Files and Folders:
     entrypoint
 
 /root/:
+    .inputrc
     .profile
-    .profiles.d
 
 /etc/apk/:
     repositories
 
-/usr/bin/:
+/usr/local/bin/:
+    abspath     fpack           getrow        pubip         uriport
+    bktohome    fprepend        getsshdport   shsrc         uriproto
+    cecho       fsplit          hasgitbranch  shuser        uriquery
+    chmods      fsubst          hiver         srcatrun      uriuser
+    copy_allto  fsubstn         isaport       strlen        urlaccount
+    delswp      fsubsts         iscommand     strlens       urldomain
+    dotload     funpack         isdigit       symln_allto   urlfile
+    ecalc       genpasswd       isdomain      uniqfy        urlfileext
+    ecol        gensshkeypair   isfunction    uniqstr       urlfilename
+    efilter     gensshpubkey    isgitchanged  unlink_allto  urlfull
+    efilters    gensslcrt       isgitrepo     unquote       urlhost
+    epos        gensslcsr       isipv4        upper         urlonly
+    erev        gensslkey       killzb        uriaccount    urlpass
+    erevs       gensslpem       load_allfr    uridomain     urlpath
+    erow        getcol          lower         urifile       urlpathonly
+    escape      getpid          lr            urifileext    urlport
+    escapes     getpidsbyglob   lsports       urifilename   urlproto
+    estrip      getpidsbyname   ncols         urifull       urlquery
+    estrips     getpnamebyid    nkill         urihost       urluser
+    esubst      getpos          normpath      urionly       userhome
+    esubsts     getppath        nrows         uripass       waiton
+    fappend     getprocsbyglob  prvip         uripath       whichis
+    finsert     getrndaport     psbpath       uripathonly
+
+/usr/local/sbin/:
     apk-install
     apk-remove
     apk-cleanup

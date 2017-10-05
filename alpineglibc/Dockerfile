@@ -1,8 +1,10 @@
 FROM            hwdm/apbase:latest
 MAINTAINER      Howard Mei      <howardleomei@gmail.com>
 
-ENV             LANG=C.UTF-8 \
-                GLIBC_VERSION=2.25-r0
+ENV             LANG=en_US.UTF-8
+ENV             LANGUAGE=en_US:en
+ENV             LC_ALL=en_US.UTF-8
+ENV             GLIBC_VERSION=2.25-r1
 
 # Set Default User and Home Dir
 USER            root
