@@ -19,7 +19,7 @@ ENV             LC_ALL          $LOCALE
 
 RUN             chmod 0755 /entrypoint && chmod 0644 /etc/apk/repositories && \
                 chmod 0755 /usr/local/bin/* /usr/local/sbin/* && sync && \
-                apk add --update --no-cache apk-tools && apk upgrade --available && \
+                apk add --update --no-cache apk-tools@edge && apk upgrade --available && \
                 apk add --update --no-cache musl musl-dev musl-utils && \
                 apk add --update --no-cache grep sed tar unzip libcap su-exec && \
                 set-timezone ${TIMEZONE} && apk-cleanup && ln -s /sbin/su-exec /usr/sbin/sux && \
